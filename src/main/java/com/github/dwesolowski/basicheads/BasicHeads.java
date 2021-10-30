@@ -21,7 +21,7 @@ public class BasicHeads extends JavaPlugin implements Listener {
     private String LOST_HEAD, OBTAINED_HEAD;
 
     public static boolean shouldDrop(Player killer, double dropRate) {
-        return killer.hasPermission("basicHeads.drops") &&
+        return killer != null && killer.hasPermission("basicHeads.drops") &&
                (dropRate >= 1 || (dropRate > 0 && ThreadLocalRandom.current().nextDouble() >= dropRate));
     }
 
