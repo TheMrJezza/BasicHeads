@@ -15,5 +15,7 @@ permissions:
     description: Allows access to /bhreload
 commands:
   bhreload:
+    aliases:
+      - reloadbh
     description: Reload the BasicHeads config.yml file.
     permission: basicheads.reload

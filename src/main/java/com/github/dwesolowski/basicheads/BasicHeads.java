@@ -1,6 +1,5 @@
 package com.github.dwesolowski.basicheads;
 
-import org.apache.commons.lang.StringUtils;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.command.Command;
@@ -21,8 +20,8 @@ public class BasicHeads extends JavaPlugin implements Listener {
     private String LOST_HEAD, OBTAINED_HEAD;
 
     public static boolean shouldDrop(Player killer, double dropRate) {
-        return killer != null && killer.hasPermission("basicHeads.drops") &&
-               (dropRate >= 1 || (dropRate > 0 && ThreadLocalRandom.current().nextDouble() >= dropRate));
+        if (killer == null || !killer.hasPermission("basicheads.drops")) return false;
+        return dropRate >= 1 || dropRate > 0 && ThreadLocalRandom.current().nextDouble() >= dropRate;
     }
 
     public void onEnable() {
@@ -39,7 +38,8 @@ public class BasicHeads extends JavaPlugin implements Listener {
     }
 
     private String interpret(String key) {
-        return ChatColor.translateAlternateColorCodes('&', getConfig().getString(key, ""));
+        key = getConfig().getString(key, "");
+        return key.trim().isEmpty() ? key : ChatColor.translateAlternateColorCodes('&', key);
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
@@ -55,10 +55,12 @@ public class BasicHeads extends JavaPlugin implements Listener {
         head.setItemMeta(meta);
         victim.getWorld().dropItemNaturally(victim.getLocation(), head);
 
-        if (!StringUtils.isBlank(LOST_HEAD))
-            victim.sendMessage(LOST_HEAD.replace("{KILLER}", killer.getDisplayName()));
-        if (!StringUtils.isBlank(OBTAINED_HEAD))
-            killer.sendMessage(OBTAINED_HEAD.replace("{VICTIM}", victim.getDisplayName()));
+        msg(victim, LOST_HEAD, "{KILLER}", killer);
+        msg(killer, OBTAINED_HEAD, "{VICTIM}", victim);
+    }
+
+    private void msg(Player receiver, String msg, String placeHolder, Player replace) {
+        if (!msg.trim().isEmpty()) receiver.sendMessage(msg.replace(placeHolder, replace.getDisplayName()));
     }
 
     public boolean onCommand(CommandSender cs, Command cmd, String alias, String[] args) {

@@ -1,7 +1,7 @@
 # BasicHeads config.yml
 # =====================
 #
-# 'dropRate' is how likely a player head will be dropped.
+# 'DropRate' is how likely a player head will be dropped.
 #    0.0 = 0% Chance; Player Heads won't drop.
 #    1.0 = 100% Chance; Player Heads will always drop.
 # Example: A value of '0.57' equals a dropRate of 57%.
