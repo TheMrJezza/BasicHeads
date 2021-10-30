@@ -1,5 +1,6 @@
 package com.github.dwesolowski.basicheads;
 
+import org.apache.commons.lang.StringUtils;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.command.Command;
@@ -17,63 +18,47 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class BasicHeads extends JavaPlugin implements Listener {
+    private String LOST_HEAD, OBTAINED_HEAD;
 
-    private String LOST_HEAD, OBTAIN_HEAD, OBTAIN_HEAD_CHANCE;
-    private boolean USE_RANDOM;
-    private double DROP_RATE;
+    public static boolean shouldDrop(Player killer, double dropRate) {
+        return killer.hasPermission("basicHeads.drops") &&
+               (dropRate >= 1 || (dropRate > 0 && ThreadLocalRandom.current().nextDouble() >= dropRate));
+    }
 
-    @Override
     public void onEnable() {
         saveDefaultConfig();
         reloadConfig();
         getServer().getPluginManager().registerEvents(this, this);
     }
 
-    @EventHandler(priority = EventPriority.MONITOR)
-    public void onPlayerDeath(PlayerDeathEvent evt) {
-        // Doesn't need to be final, but ah well.
-        final Player dead = evt.getEntity(), killer = dead.getKiller();
-
-        // Do nothing if killer isn't a player, or they don't have permission.
-        if (killer == null || !killer.hasPermission("basicheads.drops")) return;
-
-        // ThreadLocalRandom is preferred over Random.
-        if (!USE_RANDOM || DROP_RATE > ThreadLocalRandom.current().nextDouble()) {
-            final ItemStack skull = new ItemStack(Material.PLAYER_HEAD);
-            final ItemMeta meta = skull.getItemMeta();
-
-            // Remove IDE errors. Usually, you should always receive a new SkullMeta
-            // instance and this check would be unnecessary. You never know though.
-            if (meta instanceof SkullMeta)
-                ((SkullMeta) meta).setOwningPlayer(dead);
-
-            skull.setItemMeta(meta);
-
-            // Alternatively, we could also use 'evt.getDrops().add(skull);'
-            dead.getWorld().dropItemNaturally(dead.getLocation(), skull);
-
-            if (LOST_HEAD != null)
-                dead.sendMessage(LOST_HEAD.replace("{KILLER}", ChatColor.stripColor(killer.getDisplayName())));
-
-            final String message = USE_RANDOM ? OBTAIN_HEAD_CHANCE : OBTAIN_HEAD;
-            if (message != null)
-                killer.sendMessage(message.replace("{VICTIM}", ChatColor.stripColor(dead.getDisplayName())));
-        }
-    }
-
-    private String formatMessage(String key) {
-        key = getConfig().getString(key, "").trim();
-        return key.isEmpty() ? null : ChatColor.translateAlternateColorCodes('&', key);
-    }
-
     @Override
     public void reloadConfig() {
         super.reloadConfig();
-        LOST_HEAD = formatMessage("Messages.LostYourHead");
-        OBTAIN_HEAD = formatMessage("Messages.ObtainHead");
-        OBTAIN_HEAD_CHANCE = formatMessage("Messages.ObtainHeadChance");
-        DROP_RATE = getConfig().getDouble("dropRate");
-        USE_RANDOM = getConfig().getBoolean("useRandom");
+        LOST_HEAD = interpret("Messages.LostYourHead");
+        OBTAINED_HEAD = interpret("Messages.ObtainedHead");
+    }
+
+    private String interpret(String key) {
+        return ChatColor.translateAlternateColorCodes('&', getConfig().getString(key, ""));
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    private void onDeath(PlayerDeathEvent evt) {
+        final Player victim = evt.getEntity(), killer = victim.getKiller();
+        if (!shouldDrop(killer, getConfig().getDouble("DropRate", 0))) return;
+
+        ItemStack head = new ItemStack(Material.PLAYER_HEAD);
+        ItemMeta meta = head.getItemMeta();
+
+        if (meta instanceof SkullMeta)
+            ((SkullMeta) meta).setOwningPlayer(victim);
+        head.setItemMeta(meta);
+        victim.getWorld().dropItemNaturally(victim.getLocation(), head);
+
+        if (!StringUtils.isBlank(LOST_HEAD))
+            victim.sendMessage(LOST_HEAD.replace("{KILLER}", killer.getDisplayName()));
+        if (!StringUtils.isBlank(OBTAINED_HEAD))
+            killer.sendMessage(OBTAINED_HEAD.replace("{VICTIM}", victim.getDisplayName()));
     }
 
     public boolean onCommand(CommandSender cs, Command cmd, String alias, String[] args) {

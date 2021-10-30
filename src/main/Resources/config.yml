@@ -1,15 +1,26 @@
 # BasicHeads config.yml
-
-# Use random dropRates defined below
-useRandom: false
-
-# Rate must be between 0.1 and 1.00 - 'ex. 0.5 = 50% chance'
-dropRate: 0.5
-
-# Messages
-# Comment or leave blank to disable a message
-# displayed can contain standard Minecraft color codes and the Placeholders {VICTIM} and {KILLER} may be used
+# =====================
+#
+# 'dropRate' is how likely a player head will be dropped.
+#    0.0 = 0% Chance; Player Heads won't drop.
+#    1.0 = 100% Chance; Player Heads will always drop.
+# Example: A value of '0.57' equals a dropRate of 57%.
+DropRate: 0.5
+#
+#
+# Messages Configuration:
+# To disable a message either: comment out, delete, or leave blank.
+# Colour Formatting Codes can be used with either '§' or '&'.
 Messages:
+  #
+  #
+  # This message is displayed to a player IF their head was dropped
+  # after being killed by another player (i.e. "The Killer").
+  # Use the {KILLER} Placeholder to get the name of "The Killer".
   LostYourHead: "&f{KILLER} &chas stolen your head!"
+  #
+  #
+  # This message is displayed to a player IF they kill another player
+  # (i.e. "The Victim") AND The Victim's head was dropped.
+  # Use the {VICTIM} Placeholder to get the name of "The Victim".
   ObtainHead: "&eYou have obtained &f{VICTIM}'s &ehead!"
-  ObtainHeadByChance: "&eYou got lucky and obtained &f{VICTIM}'s &ehead!"
